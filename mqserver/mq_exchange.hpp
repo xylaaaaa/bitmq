@@ -76,7 +76,7 @@ namespace bitmq {
                 }
             }
             void removeTable() {
-                #define DROP_TABLE "drop table if not exists exchage_table;"
+                #define DROP_TABLE "drop table if exists exchange_table;"
                 bool ret = _sql_helper.exec(DROP_TABLE, nullptr, nullptr);
                 if (ret == false)
                 {
@@ -92,7 +92,7 @@ namespace bitmq {
                 ss << exp->type << ", ";
                 ss << exp->durable << ", ";
                 ss << exp->auto_delete << ", ";
-                ss << "'" << exp->getArgs() << ");";
+                ss << "'" << exp->getArgs() << "');";
                 return _sql_helper.exec(ss.str(), nullptr, nullptr);
             }
 
@@ -154,6 +154,7 @@ namespace bitmq {
                         return false;
                     }
                 }
+                _exchanges.insert(std::make_pair(name, exp));
                 return true;
             }
 

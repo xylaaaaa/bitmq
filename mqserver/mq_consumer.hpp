@@ -189,6 +189,7 @@ namespace bitmq {
                     DLOG("没有找到队列 %s 的消费者管理句柄！", queue_name.c_str());
                     return false;
                 }
+                qcp = it->second;
             }
             return qcp->empty();
         }

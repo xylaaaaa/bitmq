@@ -81,17 +81,13 @@ namespace bitmq
             std::vector<std::string> bkeys, rkeys;
             int n_bkey = StrHelper::split(binding_key, ".", bkeys);
             int n_rkey = StrHelper::split(routing_key, ".", rkeys);
-            if (n_bkey != n_rkey)
-            {
-                return false;
-            }
             std::vector<std::vector<bool>> dp(n_bkey + 1, std::vector<bool>(n_rkey + 1, false));
             dp[0][0] = true;
-            for (int i = 1; i <= bkeys.size(); i++) // 如果binding_key以 #起始，则将 #对应行的第0列置为1.
+            for (int i = 1; i <= n_bkey; i++) // 如果binding_key以 #起始，则将 #对应行的第0列置为1.
             {
                 if (bkeys[i - 1] == "#")
                 {
-                    dp[i][0] = true;
+                    dp[i][0] = dp[i - 1][0];
                     continue;
                 }
                 break;
@@ -106,7 +102,7 @@ namespace bitmq
                     }
                     else if (bkeys[i - 1] == "#")
                     {
-                        dp[i][j] = dp[i - 1][j] | dp[i][j - 1] | dp[i - 1][j - 1];
+                        dp[i][j] = dp[i - 1][j] || dp[i][j - 1];
                     }
                 }
             }

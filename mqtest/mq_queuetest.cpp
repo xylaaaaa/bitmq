@@ -17,7 +17,8 @@ public:
 };
 
 TEST(queue_test, insert_test) {
-    std::unordered_map<std::string, std::string> map = {{"k1", "v1"}};
+    google::protobuf::Map<std::string, std::string> map;
+    map["k1"] = "v1";
     mqmp->declareQueue("queue1", true, false, false, map);
     mqmp->declareQueue("queue2", true, false, false, map);
     mqmp->declareQueue("queue3", true, false, false, map);
@@ -51,6 +52,5 @@ int main(int argc, char *argv[])
 {
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new QueueTest);
-    RUN_ALL_TESTS();
-    return 0;
+    return RUN_ALL_TESTS();
 }

@@ -10,10 +10,19 @@ public:
     virtual void SetUp() override
     {
         bmp = std::make_shared<bitmq::BindingManager>("./data/meta.db");
+        bmp->clear();
+        bmp = std::make_shared<bitmq::BindingManager>("./data/meta.db");
+
+        bmp->bind("exchange1", "queue1", "news.music.#", true);
+        bmp->bind("exchange1", "queue2", "news.sport.#", true);
+        bmp->bind("exchange1", "queue3", "news.gossip.#", true);
+        bmp->bind("exchange2", "queue1", "news.music.pop", true);
+        bmp->bind("exchange2", "queue2", "news.sport.football", true);
+        bmp->bind("exchange2", "queue3", "news.gossip.#", true);
     }
     virtual void TearDown() override
     {
-        // bmp->clear();
+        bmp->clear();
     }
 };
 // TEST(queue_test, insert_test) {
@@ -95,6 +104,5 @@ int main(int argc, char *argv[])
 {
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new QueueTest);
-    RUN_ALL_TESTS();
-    return 0;
+    return RUN_ALL_TESTS();
 }

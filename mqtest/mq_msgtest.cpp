@@ -8,6 +8,8 @@ class MessageTest : public testing::Environment
 public:
     virtual void SetUp() override
     {
+        bitmq::FileHelper::removeFile("./data/message/queue1.mqd");
+        bitmq::FileHelper::removeFile("./data/message/queue1.mqd.tmp");
         mmp = std::make_shared<bitmq::MessageManager>("./data/message/");
         mmp->initQueueMessage("queue1");
     }
@@ -24,13 +26,13 @@ TEST(message_test, insert_test)
     properties.set_id(bitmq::UUIDHelper::uuid());
     properties.set_delivery_mode(bitmq::DeliveryMode::DURABLE);
     properties.set_routing_key("news.music.pop");
-    mmp->insert("queue1", &properties, "Hello World-1", bitmq::DeliveryMode::DURABLE);
-    mmp->insert("queue1", nullptr, "Hello World-2", bitmq::DeliveryMode::DURABLE);
-    mmp->insert("queue1", nullptr, "Hello World-3", bitmq::DeliveryMode::DURABLE);
-    mmp->insert("queue1", nullptr, "Hello World-4", bitmq::DeliveryMode::DURABLE);
-    mmp->insert("queue1", nullptr, "Hello World-5", bitmq::DeliveryMode::UNDURABLE);
+    mmp->insert("queue1", &properties, "Hello World-1", true);
+    mmp->insert("queue1", nullptr, "Hello World-2", true);
+    mmp->insert("queue1", nullptr, "Hello World-3", true);
+    mmp->insert("queue1", nullptr, "Hello World-4", true);
+    mmp->insert("queue1", nullptr, "Hello World-5", false);
     ASSERT_EQ(mmp->getable_count("queue1"), 5);
-    ASSERT_EQ(mmp->total_count("queue1"), 5);
+    ASSERT_EQ(mmp->total_count("queue1"), 4);
     ASSERT_EQ(mmp->durable_count("queue1"), 4);
     ASSERT_EQ(mmp->waitack_count("queue1"), 0);
 }
@@ -133,6 +135,5 @@ int main(int argc, char *argv[])
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new MessageTest);
     // testing::AddGlobalTestEnvironment(new MessageTest2);
-    RUN_ALL_TESTS();
-    return 0;
+    return RUN_ALL_TESTS();
 }
