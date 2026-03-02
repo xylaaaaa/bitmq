@@ -1,1 +1,24 @@
 /mqthird
+/.DS_Store
+**/.DS_Store
+
+# mqtest build artifacts (macOS)
+/mqtest/*.dSYM/
+
+# mqtest binaries
+/mqtest/mq_bindingtest
+/mqtest/mq_consumertest
+/mqtest/mq_exchangetest
+/mqtest/mq_filetest
+/mqtest/mq_hosttest
+/mqtest/mq_msgtest
+/mqtest/mq_queuetest
+/mqtest/mq_routetest
+
+# mqtest runtime data
+/mqtest/data/meta.db
+/mqtest/data/message/*.mqd
+/mqtest/data/message/*.mqd.tmp
+
+# ignore mqtest directory entries
+/mqtest/
