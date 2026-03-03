@@ -1,5 +1,5 @@
-#ifndef __M_BROKER_H__
-#define __M_BROKER_H__
+#ifndef BITMQ_MQSERVER_MQ_BROKER_HPP
+#define BITMQ_MQSERVER_MQ_BROKER_HPP
 #include "muduo/proto/codec.h"
 #include "muduo/proto/dispatcher.h"
 #include "muduo/base/Logging.h"

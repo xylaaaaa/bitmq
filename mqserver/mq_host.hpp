@@ -1,5 +1,5 @@
-#ifndef __M_HOST_H__
-#define __M_HOST_H__
+#ifndef BITMQ_MQSERVER_MQ_HOST_HPP
+#define BITMQ_MQSERVER_MQ_HOST_HPP
 #include "mq_exchange.hpp"
 #include "mq_queue.hpp"
 #include "mq_binding.hpp"

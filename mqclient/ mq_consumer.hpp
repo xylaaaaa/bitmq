@@ -1,5 +1,5 @@
-#ifndef __M_CONSUMER_H__
-#define __M_CONSUMER_H__
+#ifndef BITMQ_MQCLIENT_SPACE_MQ_CONSUMER_HPP
+#define BITMQ_MQCLIENT_SPACE_MQ_CONSUMER_HPP
 
 #include "../mqcommon/mq_logger.hpp"
 #include "../mqcommon/mq_helper.hpp"

@@ -20,6 +20,7 @@ message BasicProperties{
     string routing_key = 3;
 };
 
+// 消息结构：payload 为业务内容，offset/length 为存储定位信息。
 message Message {
     message Payload {
         BasicProperties properties = 1;

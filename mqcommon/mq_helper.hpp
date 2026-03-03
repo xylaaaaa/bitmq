@@ -1,5 +1,5 @@
-#ifndef __M_HELPER_H__
-#define __M_HELPER_H__
+#ifndef BITMQ_MQCOMMON_MQ_HELPER_HPP
+#define BITMQ_MQCOMMON_MQ_HELPER_HPP
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -12,6 +12,8 @@
 #include <cstring>
 #include <cerrno>
 #include <sys/stat.h>
+#include <dirent.h>
+#include <unistd.h>
 #include "mq_logger.hpp"
 
 namespace bitmq
@@ -60,6 +62,14 @@ namespace bitmq
     public:
         static size_t split(const std::string &str, const std::string &sep, std::vector<std::string> &result)
         {
+            if (sep.empty())
+            {
+                if (!str.empty())
+                {
+                    result.push_back(str);
+                }
+                return result.size();
+            }
             size_t pos, idx = 0;
             while (idx < str.size())
             {
@@ -160,6 +170,18 @@ namespace bitmq
         }
         bool write(const char *body, size_t offset, size_t len)
         {
+            if (body == nullptr && len != 0)
+            {
+                ELOG("%s 写入参数非法: body 为空且 len 非 0", _filename.c_str());
+                return false;
+            }
+            if (!exists())
+            {
+                if (!createFile(_filename))
+                {
+                    return false;
+                }
+            }
             // 1. 打开文件
             std::fstream fs(_filename, std::ios::binary | std::ios::in | std::ios::out);
             if (fs.is_open() == false)
@@ -218,22 +240,51 @@ namespace bitmq
         }
         static bool createDirectory(const std::string &path)
         {
-            //  aaa/bbb/ccc    cccc
-            // 在多级路径创建中，我们需要从第一个父级目录开始创建
-            size_t pos, idx = 0;
-            while (idx < path.size())
+            if (path.empty())
             {
-                pos = path.find("/", idx);
+                ELOG("创建目录失败: 路径为空");
+                return false;
+            }
+            std::string target = path;
+            while (target.size() > 1 && target.back() == '/')
+            {
+                target.pop_back();
+            }
+            struct stat st;
+            if (stat(target.c_str(), &st) == 0)
+            {
+                return S_ISDIR(st.st_mode);
+            }
+
+            std::string current;
+            size_t idx = 0;
+            if (!target.empty() && target[0] == '/')
+            {
+                current = "/";
+                idx = 1;
+            }
+
+            while (idx <= target.size())
+            {
+                size_t pos = target.find("/", idx);
+                std::string part = (pos == std::string::npos) ? target.substr(idx) : target.substr(idx, pos - idx);
+                if (!part.empty())
+                {
+                    if (!current.empty() && current.back() != '/')
+                    {
+                        current += "/";
+                    }
+                    current += part;
+                    int ret = mkdir(current.c_str(), 0775);
+                    if (ret != 0 && errno != EEXIST)
+                    {
+                        ELOG("创建目录 %s 失败: %s", current.c_str(), strerror(errno));
+                        return false;
+                    }
+                }
                 if (pos == std::string::npos)
                 {
-                    return (mkdir(path.c_str(), 0775) == 0);
-                }
-                std::string subpath = path.substr(0, pos);
-                int ret = mkdir(subpath.c_str(), 0775);
-                if (ret != 0 && errno != EEXIST)
-                {
-                    ELOG("创建目录 %s 失败: %s", subpath.c_str(), strerror(errno));
-                    return false;
+                    break;
                 }
                 idx = pos + 1;
             }
@@ -241,10 +292,85 @@ namespace bitmq
         }
         static bool removeDirectory(const std::string &path)
         {
-            // rm -rf path
-            // system()
-            std::string cmd = "rm -rf " + path;
-            return (system(cmd.c_str()) != -1);
+            if (path.empty())
+            {
+                ELOG("删除目录失败: 路径为空");
+                return false;
+            }
+
+            struct stat st;
+            if (lstat(path.c_str(), &st) != 0)
+            {
+                if (errno == ENOENT)
+                {
+                    return true;
+                }
+                ELOG("获取目录 %s 状态失败: %s", path.c_str(), strerror(errno));
+                return false;
+            }
+            if (!S_ISDIR(st.st_mode))
+            {
+                ELOG("删除目录失败: %s 不是目录", path.c_str());
+                return false;
+            }
+
+            DIR *dir = opendir(path.c_str());
+            if (dir == nullptr)
+            {
+                ELOG("打开目录 %s 失败: %s", path.c_str(), strerror(errno));
+                return false;
+            }
+
+            struct dirent *entry = nullptr;
+            while ((entry = readdir(dir)) != nullptr)
+            {
+                const char *name = entry->d_name;
+                if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
+                {
+                    continue;
+                }
+
+                std::string child = path;
+                if (!child.empty() && child.back() != '/')
+                {
+                    child += "/";
+                }
+                child += name;
+
+                struct stat cst;
+                if (lstat(child.c_str(), &cst) != 0)
+                {
+                    ELOG("获取路径 %s 状态失败: %s", child.c_str(), strerror(errno));
+                    closedir(dir);
+                    return false;
+                }
+
+                if (S_ISDIR(cst.st_mode))
+                {
+                    if (!removeDirectory(child))
+                    {
+                        closedir(dir);
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (::remove(child.c_str()) != 0)
+                    {
+                        ELOG("删除文件 %s 失败: %s", child.c_str(), strerror(errno));
+                        closedir(dir);
+                        return false;
+                    }
+                }
+            }
+
+            closedir(dir);
+            if (rmdir(path.c_str()) != 0)
+            {
+                ELOG("删除目录 %s 失败: %s", path.c_str(), strerror(errno));
+                return false;
+            }
+            return true;
         }
 
     private:

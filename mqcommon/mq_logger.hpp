@@ -1,5 +1,5 @@
-#ifndef __M_LOG_H__
-#define __M_LOG_H__
+#ifndef BITMQ_MQCOMMON_MQ_LOGGER_HPP
+#define BITMQ_MQCOMMON_MQ_LOGGER_HPP
 #include <iostream>
 #include <ctime>
 

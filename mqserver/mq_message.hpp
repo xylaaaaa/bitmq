@@ -1,5 +1,5 @@
-#ifndef __M_MSG_H__
-#define __M_MSG_H__
+#ifndef BITMQ_MQSERVER_MQ_MESSAGE_HPP
+#define BITMQ_MQSERVER_MQ_MESSAGE_HPP
 
 #include "../mqcommon/mq_logger.hpp"
 #include "../mqcommon/mq_helper.hpp"

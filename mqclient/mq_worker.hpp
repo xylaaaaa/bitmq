@@ -1,5 +1,5 @@
-#ifndef  __M_WORKER_H__
-#define  __M_WORKER_H__
+#ifndef BITMQ_MQCLIENT_MQ_WORKER_HPP
+#define BITMQ_MQCLIENT_MQ_WORKER_HPP
 
 #include "muduo/net/EventLoopThread.h"
 #include "../mqcommon/mq_logger.hpp"

@@ -1,5 +1,5 @@
-#ifndef __M_BINDING_H__
-#define __M_BINDING_H__
+#ifndef BITMQ_MQSERVER_MQ_BINDING_HPP
+#define BITMQ_MQSERVER_MQ_BINDING_HPP
 #include "../mqcommon/mq_logger.hpp"
 #include "../mqcommon/mq_helper.hpp"
 #include "../mqcommon/mq_msg.pb.h"

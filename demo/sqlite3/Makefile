@@ -1,2 +1,2 @@
 main:main.cc
-	g++ -std=c++11 $^ -o $@ -lsqlite3
+	g++ -std=c++17 $^ -o $@ -lsqlite3

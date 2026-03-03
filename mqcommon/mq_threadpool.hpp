@@ -1,5 +1,5 @@
-#ifndef __M_THRPOOL_H__
-#define __M_THRPOOL_H__
+#ifndef BITMQ_MQCOMMON_MQ_THREADPOOL_HPP
+#define BITMQ_MQCOMMON_MQ_THREADPOOL_HPP
 #include <iostream>
 #include <functional>
 #include <memory>
@@ -8,6 +8,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
+#include <deque>
+#include <atomic>
+#include <stdexcept>
 
 class threadpool
 {
@@ -16,6 +19,10 @@ public:
     using Functor = std::function<void(void)>;
     threadpool(int thr_count = 1) : _stop(false)
     {
+        if (thr_count <= 0)
+        {
+            thr_count = 1;
+        }
         for (int i = 0; i < thr_count; i++)
         {
             _threads.emplace_back(&threadpool::entry, this);
@@ -27,13 +34,19 @@ public:
     }
     void stop()
     {
-        if (_stop == true)
-            return;
-        _stop = true;
+        {
+            std::unique_lock<std::mutex> lock(_mutex);
+            if (_stop == true)
+                return;
+            _stop = true;
+        }
         _cv.notify_all();
         for (auto &thread : _threads)
         {
-            thread.join();
+            if (thread.joinable())
+            {
+                thread.join();
+            }
         }
     }
     // push传入的是首先有一个函数--用户要执行的函数， 接下来是不定参，表示要处理的数据也就是要传入到函数中的参数
@@ -50,11 +63,15 @@ public:
         // 2. 构造一个lambda匿名函数（捕获任务对象），函数内执行任务对象
         {
             std::unique_lock<std::mutex> lock(_mutex);
+            if (_stop)
+            {
+                throw std::runtime_error("push on stopped threadpool");
+            }
             // 3. 将构造出来的匿名函数对象，抛入到任务池中
-            _taskpool.push_back([task]()
-                                { (*task)(); });
-            _cv.notify_one();
+            _taskpool.emplace_back([task]()
+                                   { (*task)(); });
         }
+        _cv.notify_one();
         return fu;
     }
 
@@ -62,28 +79,30 @@ private:
     // 线程入口函数---内部不断的从任务池中取出任务进行执行。
     void entry()
     {
-        while (!_stop)
+        while (true)
         {
-            std::vector<Functor> tmp_taskpool;
+            Functor task;
             {
                 // 加锁
                 std::unique_lock<std::mutex> lock(_mutex);
                 // 等待任务池不为空，或者_stop被置位返回，
                 _cv.wait(lock, [this]()
                          { return _stop || !_taskpool.empty(); });
-                // 取出任务进行执行
-                tmp_taskpool.swap(_taskpool);
+                if (_stop && _taskpool.empty())
+                {
+                    return;
+                }
+                // 取出一个任务进行执行，避免整批任务被单线程取走
+                task = std::move(_taskpool.front());
+                _taskpool.pop_front();
             }
-            for (auto &task : tmp_taskpool)
-            {
-                task();
-            }
+            task();
         }
     }
 
 private:
     std::atomic<bool> _stop;
-    std::vector<Functor> _taskpool; // 任务池
+    std::deque<Functor> _taskpool; // 任务池
     std::mutex _mutex;
     std::condition_variable _cv;
     std::vector<std::thread> _threads;

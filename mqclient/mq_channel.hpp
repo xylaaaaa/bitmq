@@ -1,5 +1,5 @@
-#ifndef __M_CHANNEL_H__
-#define __M_CHANNEL_H__
+#ifndef BITMQ_MQCLIENT_MQ_CHANNEL_HPP
+#define BITMQ_MQCLIENT_MQ_CHANNEL_HPP
 #include "muduo/net/TcpConnection.h"
 #include "muduo/proto/codec.h"
 #include "muduo/proto/dispatcher.h"

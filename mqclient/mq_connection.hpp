@@ -1,5 +1,5 @@
-#ifndef __M_CONNECTION_H__
-#define __M_CONNECTION_H__
+#ifndef BITMQ_MQCLIENT_MQ_CONNECTION_HPP
+#define BITMQ_MQCLIENT_MQ_CONNECTION_HPP
 #include "muduo/proto/dispatcher.h"
 #include "muduo/proto/codec.h"
 #include "muduo/base/Logging.h"

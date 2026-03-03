@@ -1,5 +1,5 @@
-#ifndef __M_ROUTE_H__
-#define __M_ROUTE_H__
+#ifndef BITMQ_MQSERVER_MQ_ROUTE_HPP
+#define BITMQ_MQSERVER_MQ_ROUTE_HPP
 #include <iostream>
 #include "../mqcommon/mq_logger.hpp"
 #include "../mqcommon/mq_helper.hpp"
