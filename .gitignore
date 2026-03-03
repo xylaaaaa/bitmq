@@ -1,12 +1,33 @@
-/mqthird
-/.DS_Store
+# ============================================================
+# macOS
+# ============================================================
+.DS_Store
 **/.DS_Store
 
-# mqtest build artifacts (macOS)
-/mqtest/*.dSYM/
+# ============================================================
+# Third-party dependencies
+# ============================================================
+/mqthird/
 
-# mqtest binaries
+# ============================================================
+# clangd / IntelliSense
+# ============================================================
+.cache/
+.clangd
+.clangd/
+compile_commands.json
+
+# ============================================================
+# Build artifacts: macOS debug symbols (global)
+# ============================================================
+*.dSYM/
+
+# ============================================================
+# mqtest — compiled test binaries
+# ============================================================
 /mqtest/mq_bindingtest
+/mqtest/mq_channeltest
+/mqtest/mq_connectiontest
 /mqtest/mq_consumertest
 /mqtest/mq_exchangetest
 /mqtest/mq_filetest
@@ -15,10 +36,29 @@
 /mqtest/mq_queuetest
 /mqtest/mq_routetest
 
-# mqtest runtime data
+# mqtest — runtime data
 /mqtest/data/meta.db
 /mqtest/data/message/*.mqd
 /mqtest/data/message/*.mqd.tmp
 
-# ignore mqtest directory entries
-/mqtest/
+# ============================================================
+# demo — compiled binaries
+# ============================================================
+/demo/future/async
+/demo/future/package_task
+/demo/future/promise
+/demo/future/threadpool
+/demo/gtest/assert
+/demo/gtest/global
+/demo/gtest/suit
+/demo/log/log
+/demo/muduo/dict_client
+/demo/muduo/dict_server
+/demo/muduo/dict/dict_client
+/demo/muduo/dict/dict_server
+/demo/muduo/protobuf/client
+/demo/muduo/protobuf/server
+/demo/protobuf/main
+/demo/random/random
+/demo/split/split
+/demo/sqlite3/main

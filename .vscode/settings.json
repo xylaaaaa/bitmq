@@ -66,5 +66,24 @@
         "typeinfo": "cpp",
         "*.ipp": "cpp",
         "future": "cpp"
-    }
+    },
+    "clangd.enable": true,
+    "clangd.detectExtensionConflicts": true,
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--header-insertion=never",
+        "--compile-commands-dir=${workspaceFolder}"
+    ],
+    "clangd.fallbackFlags": [
+        "-std=c++17",
+        "-I${workspaceFolder}",
+        "-I${workspaceFolder}/mqcommon",
+        "-I${workspaceFolder}/mqserver",
+        "-I${workspaceFolder}/mqclient",
+        "-I${workspaceFolder}/demo/muduo/include",
+        "-I/opt/homebrew/include"
+    ],
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.errorSquiggles": "disabled"
 }

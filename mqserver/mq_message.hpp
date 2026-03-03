@@ -124,7 +124,7 @@ namespace bitmq {
                     }
                     offset += sizeof(size_t);
                     std::string msg_body(msg_size, '\0');
-                    data_file_helper.read(&msg_body[0], offset, msg_size);
+                    ret = data_file_helper.read(&msg_body[0], offset, msg_size);
                     if (ret == false)
                     {
                         DLOG("读取消息数据失败！");
@@ -489,4 +489,3 @@ namespace bitmq {
 
 
 #endif
-

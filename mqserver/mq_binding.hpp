@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <memory>
+#include <cassert>
 
 namespace bitmq
 {
@@ -36,7 +37,7 @@ namespace bitmq
         {
             std::string path = FileHelper::parentDirectory(dbfile);
             FileHelper::createDirectory(path);
-            _sql_helper.open();
+            assert(_sql_helper.open());
             createTable();
         }
         void createTable()
@@ -59,9 +60,9 @@ namespace bitmq
             // insert into binding_table values('exchange1', 'msgqueue1', 'news.music.#');
             std::stringstream sql;
             sql << "insert into binding_table values(";
-            sql << "'" << binding->exchange_name << "', ";
-            sql << "'" << binding->msgqueue_name << "', ";
-            sql << "'" << binding->binding_key << "');";
+            sql << "'" << escapeSqlLiteral(binding->exchange_name) << "', ";
+            sql << "'" << escapeSqlLiteral(binding->msgqueue_name) << "', ";
+            sql << "'" << escapeSqlLiteral(binding->binding_key) << "');";
             return _sql_helper.exec(sql.str(), nullptr, nullptr);
         }
         void remove(const std::string &ename, const std::string &qname)
@@ -69,8 +70,8 @@ namespace bitmq
             // delete from binding_table where exchange_name='' and msgqueue_name='';
             std::stringstream sql;
             sql << "delete from binding_table where ";
-            sql << "exchange_name='" << ename << "' and ";
-            sql << "msgqueue_name='" << qname << "';";
+            sql << "exchange_name='" << escapeSqlLiteral(ename) << "' and ";
+            sql << "msgqueue_name='" << escapeSqlLiteral(qname) << "';";
             _sql_helper.exec(sql.str(), nullptr, nullptr);
         }
         void removeExchangeBindings(const std::string &ename)
@@ -78,14 +79,14 @@ namespace bitmq
             // delete from binding_table where exchange_name='';
             std::stringstream sql;
             sql << "delete from binding_table where ";
-            sql << "exchange_name='" << ename << "';";
+            sql << "exchange_name='" << escapeSqlLiteral(ename) << "';";
             _sql_helper.exec(sql.str(), nullptr, nullptr);
         }
         void removeMsgQueueBindings(const std::string &qname)
         {
             std::stringstream sql;
             sql << "delete from binding_table where ";
-            sql << "msgqueue_name='" << qname << "';";
+            sql << "msgqueue_name='" << escapeSqlLiteral(qname) << "';";
             _sql_helper.exec(sql.str(), nullptr, nullptr);
         }
         BindingMap recovery()
@@ -100,7 +101,17 @@ namespace bitmq
     private:
         static int selectCallback(void *arg, int numcol, char **row, char **fields)
         {
+            (void)fields;
             BindingMap *result = (BindingMap *)arg;
+            if (result == nullptr || row == nullptr || numcol < 3)
+            {
+                return 0;
+            }
+            if (row[0] == nullptr || row[1] == nullptr || row[2] == nullptr)
+            {
+                ELOG("binding_table 记录字段缺失，跳过一条记录");
+                return 0;
+            }
             Binding::ptr bp = std::make_shared<Binding>(row[0], row[1], row[2]);
             // 为了防止 交换机相关的绑定信息已经存在，因此不能直接创建队列映射，进行添加，这样会覆盖历史数据
             // 因此得先获取交换机对应的映射对象，往里边添加数据
@@ -108,6 +119,23 @@ namespace bitmq
             MsgQueueBindingMap &qmap = (*result)[bp->exchange_name];
             qmap.insert(std::make_pair(bp->msgqueue_name, bp));
             return 0;
+        }
+        static std::string escapeSqlLiteral(const std::string &input)
+        {
+            std::string escaped;
+            escaped.reserve(input.size() + 8);
+            for (char ch : input)
+            {
+                if (ch == '\'')
+                {
+                    escaped += "''";
+                }
+                else
+                {
+                    escaped.push_back(ch);
+                }
+            }
+            return escaped;
         }
 
     private:
@@ -158,6 +186,10 @@ namespace bitmq
             } // 交换机没有队列相关的绑定信息
             _mapper.remove(ename, qname);
             _bindings[ename].erase(qname);
+            if (_bindings[ename].empty())
+            {
+                _bindings.erase(ename);
+            }
         }
         void removeExchangeBindings(const std::string &ename)
         {
@@ -169,10 +201,16 @@ namespace bitmq
         {
             std::unique_lock<std::mutex> lock(_mutex);
             _mapper.removeMsgQueueBindings(qname);
-            for (auto start = _bindings.begin(); start != _bindings.end(); ++start)
+            for (auto start = _bindings.begin(); start != _bindings.end();)
             {
                 // 遍历每个交换机的绑定信息，从中移除指定队列的相关信息
                 start->second.erase(qname);
+                if (start->second.empty())
+                {
+                    start = _bindings.erase(start);
+                    continue;
+                }
+                ++start;
             }
         }
         MsgQueueBindingMap getExchangeBindings(const std::string &ename)
